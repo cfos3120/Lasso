@@ -1,4 +1,4 @@
-debug:
+mode_1:
   model:
     layers: [64, 64, 64, 64, 64]
     modes1: [8, 8, 8, 8]
@@ -34,7 +34,7 @@ debug:
     save_name: '4C0_v1'
     data_iter: 4
 
-  evalx:
+  eval:
     data:
       datapath: '/project/MLFluids/NS_fine_Re500_T128_part2.npy'
       problem_type: 'vorticity_periodic_short' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
