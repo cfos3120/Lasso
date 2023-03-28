@@ -1,4 +1,4 @@
-mode_1:
+debug:
   model:
     layers: [64, 64, 64, 64, 64]
     modes1: [8, 8, 8, 8]

@@ -9,6 +9,7 @@ from training_utils.save_checkpoint import save_checkpoint
 
 from timeit import default_timer
 import numpy as np
+import os
 import socket
 from argparse import ArgumentParser
 
@@ -185,7 +186,7 @@ if __name__ == '__main__':
 
     # 1. Parse arguments and load configurations
     parser = ArgumentParser(description='Basic paser')
-    parser.add_argument('--config_path', type=str, default= '../default.yaml', help='Path to the configuration file')
+    parser.add_argument('--config_path', type=str, default= os.path.dirname(__file__)+r'/default.yaml', help='Path to the configuration file')
     parser.add_argument('--run_name', type=str, default= 'debug', help='Name of test within configuration file')
     options = parser.parse_args()
     config_file = options.config_path
@@ -226,5 +227,5 @@ if __name__ == '__main__':
     if 'eval' in run_config:
         eval_fno(run_config['eval'], model)
     
-    if 'fine' in run_config:
+    if 'finez' in run_config:
         train_fno(run_config['fine'], model)
