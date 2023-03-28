@@ -119,7 +119,31 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
 
     return eqn_c, eqn_mx, eqn_my
 
-def PINO_loss3d_decider(model_input, model_output, forcing_type, nu, t_interval):
+def FDM_NS_cartesian_hard(A):
+    # This is based on the model producing a vector potential A, instead of output velocity V.
+    # Thus gradients of A need to be calculated to enforce mass conservation.
+
+    assert A.shape[-1] == 2
+    assert A.shape[0] > 1 #--> There is a bug with torch.gradient which doesnt handle small batches well
+
+    batchsize = A.size(0)
+    nx = A.size(1)
+    ny = A.size(2)
+    nt = A.size(3)
+    device = A.device
+
+    # Assuming uniform periodic spatial grid NOTE: These need to line up with the grid function made for training.
+    x = torch.arange(0,1.0,1.0/nx, device=device) #<- keep the domain non-dimensional
+    y = torch.arange(0,1.0,1.0/ny, device=device)
+
+    # each of these (dV_dx etc.) should come with shape (Batch,x,y,t,Velocity direction)
+    dA_dx, dA_dy = torch.gradient(A, spacing =tuple([x, y]), dim = [1,2])
+
+    V_tilde = dA_dx + dA_dy
+
+    return V_tilde
+
+def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, t_interval):
     
     B = model_output.shape[0]
     S = model_output.shape[1]
@@ -142,6 +166,7 @@ def PINO_loss3d_decider(model_input, model_output, forcing_type, nu, t_interval)
 
         loss_w = lploss(Dw, forcing)
         loss_bc, loss_c, loss_m1, loss_m2 = zero_tensor, zero_tensor, zero_tensor, zero_tensor
+        loss_l2 = lploss(model_output, model_val)
 
     elif forcing_type == 'cartesian_periodic_short':
         pass
@@ -153,14 +178,20 @@ def PINO_loss3d_decider(model_input, model_output, forcing_type, nu, t_interval)
         loss_m1 = lploss.abs(eqn_mx, forcing_x)
         loss_m2 = lploss.abs(eqn_my, forcing_y)
         loss_bc, loss_w = zero_tensor, zero_tensor
+        loss_l2 = lploss(model_output, model_val)
 
     elif forcing_type == 'cavity':
         pass 
         eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian(model_output, nu=nu, t_interval=t_interval)
     
+    elif forcing_type == 'cartesian_periodic_short_hard_loss':
+        V_tilde = FDM_NS_cartesian(model_output)
+        loss_bc, loss_w, loss_c, loss_m1, loss_m2 = zero_tensor, zero_tensor, zero_tensor, zero_tensor, zero_tensor
+        loss_l2 = lploss(V_tilde, model_val)
+
     else: 
         raise(ValueError)
 
 
-    return loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2
+    return loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2
         

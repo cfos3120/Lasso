@@ -55,3 +55,29 @@ mode_1:
     xy_loss: 5.0
     save_dir: 'Lasso_1_Re500-FDM'
     save_name: 'val_T64_R256_sub1'
+
+  fine:
+    data:
+      datapath: '/project/MLFluids//NS_Re500_s256_T100_test.npy'
+      problem_type: 'vorticity_periodic_short' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
+      Re: 500
+      total_num: 100
+      offset: 0
+      n_sample: 1
+      time_interval: 0.5
+      nx: 256
+      nt: 128
+      sub: 2
+      sub_t: 1
+      shuffle: True
+    batchsize: 1
+    epochs: 2500
+    milestones: [1000, 1500, 2000]
+    base_lr: 0.0025
+    scheduler_gamma: 0.5
+    ic_loss: 1.0
+    f_loss: 1.0
+    xy_loss: 0
+    save_dir: 'Lasso_1_Re500-FDM'
+    save_name: 'fine_T100_R256'
+    data_iter: 4

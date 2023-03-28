@@ -15,7 +15,7 @@ from argparse import ArgumentParser
 def train_fno(args, model):
     
     # 0. Print training configurations
-    #print('Training Configuration:', args)
+    print('Training Configuration:', args)
 
     # 1. Load Model Checkpoint
     if 'ckpt' in args:
@@ -46,8 +46,6 @@ def train_fno(args, model):
     num_data_iter = args['data_iter']
     epochs = args['epochs']
     problem_type = args['data']['problem_type']
-    
-    myloss = LpLoss(size_average=True)
 
     # 5. Initialize Loss Recording Dictionary
     loss_keys = ["Total Weighted Loss", "LP Loss", "IC Loss", "BC Loss", "Vorticity Loss", "Continuity Loss", "X-Momentum Loss", "Y-Momentum Loss", "Time"]
@@ -63,15 +61,16 @@ def train_fno(args, model):
             x, y = x.to(device), y.to(device)
             optimizer.zero_grad()
             out = model(x)
-            loss_l2 = myloss(out, y)
 
             if ic_weight != 0 or f_weight != 0:
-                loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
-                                                                                         model_output = out, 
+                loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
+                                                                                         model_output = out,
+                                                                                         model_val = y, 
                                                                                          forcing_type = problem_type, 
                                                                                          nu = nu, 
                                                                                          t_interval = t_interval)
             else:
+                loss_l2 = LpLoss.rel(out,y)
                 loss_ic, loss_f = torch.zeros(1).to(device), torch.zeros(1).to(device)
                 loss_c = torch.zeros(1).to(device)
                 loss_m1 = torch.zeros(1).to(device)
@@ -107,7 +106,7 @@ def train_fno(args, model):
 def eval_fno(args, model):
     
     # 0. Print training configurations
-    #print('Training Configuration:', args)
+    print('Evaluation Configuration:', args)
 
     # 1. Load Model Checkpoint
     if 'ckpt' in args:
@@ -181,15 +180,12 @@ def eval_fno(args, model):
                     input_sample=y, output_sample=out)
     print('Evaluation Complete')
 
-def fine_tune_fno(args, model):
-    pass
-
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # 1. Parse arguments and load configurations
     parser = ArgumentParser(description='Basic paser')
-    parser.add_argument('--config_path', type=str, default= 'default.yaml', help='Path to the configuration file')
+    parser.add_argument('--config_path', type=str, default= '../default.yaml', help='Path to the configuration file')
     parser.add_argument('--run_name', type=str, default= 'debug', help='Name of test within configuration file')
     options = parser.parse_args()
     config_file = options.config_path
@@ -231,4 +227,4 @@ if __name__ == '__main__':
         eval_fno(run_config['eval'], model)
     
     if 'fine' in run_config:
-        fine_tune_fno(run_config, model)
+        train_fno(run_config['fine'], model)
