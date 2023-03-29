@@ -149,6 +149,7 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
     S = model_output.shape[1]
     T = model_output.shape[3]
     C = model_output.shape[4]
+    device = model_output.device
 
     # Set Loss function
     lploss = LpLoss(size_average=True)
@@ -161,7 +162,7 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
     # Select what conditions to use for PDE Loss (vorticity, cartesian, cavity)
     if forcing_type == 'vorticity_periodic_short':
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
-        forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2)
+        forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         Dw = FDM_NS_vorticity(model_output, nu=nu, t_interval=t_interval)
 
         loss_w = lploss(Dw, forcing)
