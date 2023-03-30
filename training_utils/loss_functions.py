@@ -153,7 +153,7 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
 
     # Set Loss function
     lploss = LpLoss(size_average=True)
-    zero_tensor = torch.zeros(1)
+    zero_tensor = torch.zeros(1).to(device)
 
     # Inital condition is the same across all conditions and test types (3rd index onwards excludes the grid)
     u0 = model_input[:, :, :, 0, 3:] 
