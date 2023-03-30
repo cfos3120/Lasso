@@ -29,13 +29,13 @@ def save_checkpoint(path, name, model=None, loss_dict=None, optimizer=None, inpu
         print("Loss Dictionary Saved in Same Location")
 
     if input_sample != None:
-        input_sample = input_sample.numpy()
+        input_sample = input_sample.cpu().numpy()
         np.save(ckpt_dir + name + '_input_sample', input_sample)
         print("Input Sample Saved in Same Location")
 
     if output_sample != None:
         try:
-            output_sample = output_sample.detach().numpy()
+            output_sample = output_sample.detach().cpu().numpy()
         except:
             output_sample = output_sample.numpy()
         np.save(ckpt_dir + name + '_output_sample', output_sample)
