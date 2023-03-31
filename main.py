@@ -160,7 +160,6 @@ def eval_fno(args, model):
 
             loss_f = loss_w + loss_c + loss_m1 + loss_m2
             total_loss = loss_l2 * xy_weight + loss_f * f_weight + loss_ic * ic_weight + loss_bc
-            print('total_loss', total_loss)
     epoch_end_time = default_timer()
 
     for key_name, key_value in zip(loss_keys, [total_loss.item(),
@@ -225,5 +224,5 @@ if __name__ == '__main__':
     if 'eval' in run_config:
         eval_fno(run_config['eval'], model)
     
-    if 'finez' in run_config:
+    if 'fine' in run_config:
         train_fno(run_config['fine'], model)

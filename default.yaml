@@ -71,6 +71,7 @@ debug:
       sub_t: 1
       shuffle: True
     batchsize: 1
+    #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
     epochs: 2500
     milestones: [1000, 1500, 2000]
     base_lr: 0.0025
