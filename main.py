@@ -65,20 +65,18 @@ def train_fno(args, model):
 
             if ic_weight != 0 or f_weight != 0:
                 loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
-                                                                                         model_output = out,
-                                                                                         model_val = y, 
-                                                                                         forcing_type = problem_type, 
-                                                                                         nu = nu, 
-                                                                                         t_interval = t_interval)
+                                                                                                  model_output = out,
+                                                                                                  model_val = y,
+                                                                                                  forcing_type = problem_type, 
+                                                                                                  nu = nu,
+                                                                                                  t_interval = t_interval)
             else:
+                zero_tensor = torch.zeros(1).to(device)
                 loss_l2 = LpLoss.rel(out,y)
-                loss_ic, loss_f = torch.zeros(1).to(device), torch.zeros(1).to(device)
-                loss_c = torch.zeros(1).to(device)
-                loss_m1 = torch.zeros(1).to(device)
-                loss_m2 = torch.zeros(1).to(device)
+                loss_ic, loss_f, loss_bc = zero_tensor, zero_tensor, zero_tensor
+                loss_w, loss_c, loss_m1, loss_m2  = zero_tensor, zero_tensor, zero_tensor, zero_tensor
 
             loss_f = loss_w + loss_c + loss_m1 + loss_m2
-
             total_loss = loss_l2 * xy_weight + loss_f * f_weight + loss_ic * ic_weight + loss_bc
 
             total_loss.backward()
@@ -147,20 +145,20 @@ def eval_fno(args, model):
             loss_l2 = myloss(out, y)
             
             if ic_weight != 0 or f_weight != 0:
-                loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
-                                                                                            model_output = out, 
-                                                                                            forcing_type = problem_type, 
-                                                                                            nu = nu, 
-                                                                                            t_interval = t_interval)
+                loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
+                                                                                                  model_output = out,
+                                                                                                  model_val = y,
+                                                                                                  forcing_type = problem_type, 
+                                                                                                  nu = nu,
+                                                                                                  t_interval = t_interval)
 
             else:
-                loss_ic, loss_f = torch.zeros(1).to(device), torch.zeros(1).to(device)
-                loss_c = torch.zeros(1).to(device)
-                loss_m1 = torch.zeros(1).to(device)
-                loss_m2 = torch.zeros(1).to(device)
+                zero_tensor = torch.zeros(1).to(device)
+                loss_l2 = LpLoss.rel(out,y)
+                loss_ic, loss_f, loss_bc = zero_tensor, zero_tensor, zero_tensor
+                loss_w, loss_c, loss_m1, loss_m2  = zero_tensor, zero_tensor, zero_tensor, zero_tensor
 
             loss_f = loss_w + loss_c + loss_m1 + loss_m2
-
             total_loss = loss_l2 * xy_weight + loss_f * f_weight + loss_ic * ic_weight + loss_bc
             print('total_loss', total_loss)
     epoch_end_time = default_timer()
