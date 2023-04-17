@@ -208,12 +208,13 @@ if __name__ == '__main__':
     # 3. Override configuration file if running locally (for debugging purposes)
     if socket.gethostname() == 'DESKTOP-157DQSC':
         rds_data_path = r'Z:\PRJ-MLFluids\datasets'
+        #rds_data_path = r'C:\Users\Noahc\Documents\USYD\PHD\8 - Github\PINO datasets'
         for run_type in ['train','eval','fine']:
             if run_type in run_config:
                 server_datapath = run_config[run_type]['data']['datapath']
                 file_name = server_datapath.split('/')[-1]
                 run_config[run_type]['data']['datapath'] = rds_data_path + '/sample_' + file_name
-                run_config[run_type]['data']['n_sample'] = 1
+                run_config[run_type]['data']['n_sample'] = 2
                 run_config[run_type]['epochs'] = 1
     else: pass
     

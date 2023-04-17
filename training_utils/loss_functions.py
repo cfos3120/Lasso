@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 import numpy as np
 
 class LpLoss(object):
@@ -106,7 +107,7 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     # Assuming uniform periodic spatial grid NOTE: These need to line up with the grid function made for training.
     x = torch.arange(0,1.0,1.0/nx, device=device) #<- keep the domain non-dimensional
     y = torch.arange(0,1.0,1.0/ny, device=device)
-    t = torch.arange(0,t_interval,t_interval/(nt-1), device=device)
+    t = torch.arange(0,t_interval,t_interval/(nt), device=device)
 
     # each of these (dV_dx etc.) should come with shape (Batch,x,y,t,Velocity direction)
     dV_dx, dV_dy, dV_dt = torch.gradient(u, spacing =tuple([x, y, t]), dim = [1,2,3])
@@ -153,8 +154,11 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
 
     # Set Loss function
     lploss = LpLoss(size_average=True)
-    zero_tensor = torch.zeros(1).to(device)
+    torch_zero = torch.zeros(1).to(device)
 
+    # Intialize Losses
+    loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = torch_zero, torch_zero, torch_zero, torch_zero, torch_zero, torch_zero, torch_zero
+    
     # Inital condition is the same across all conditions and test types (3rd index onwards excludes the grid)
     u0 = model_input[:, :, :, 0, 3:] 
     loss_ic = lploss(model_output[:, :, :, 0, :], u0)
@@ -166,28 +170,41 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         Dw = FDM_NS_vorticity(model_output, nu=nu, t_interval=t_interval)
 
         loss_w = lploss(Dw, forcing)
-        loss_bc, loss_c, loss_m1, loss_m2 = zero_tensor, zero_tensor, zero_tensor, zero_tensor
         loss_l2 = lploss(model_output, model_val)
 
     elif forcing_type == 'cartesian_periodic_short':
-        pass
-        forcing_x = 'enter here'
-        forcing_y = 'enter here'
+        
         eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian(model_output, nu=nu, t_interval=t_interval)
         
-        loss_c = lploss.abs(eqn_c, torch.zeros_like(eqn_c))
+        torch_zero_tensor = torch.zeros(eqn_c.shape, device=eqn_c.device)
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
+        
+        # edit this for different problems (curl of sin(4y) is 4cos(4y) -> forcing in other direction is irrelevant for this problem) 
+        forcing_x = (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T).to(device)
+        forcing_y = torch_zero_tensor
+
+        loss_c = lploss.abs(eqn_c, torch_zero_tensor)
         loss_m1 = lploss.abs(eqn_mx, forcing_x)
         loss_m2 = lploss.abs(eqn_my, forcing_y)
-        loss_bc, loss_w = zero_tensor, zero_tensor
         loss_l2 = lploss(model_output, model_val)
 
     elif forcing_type == 'cavity':
-        pass 
         eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian(model_output, nu=nu, t_interval=t_interval)
-    
+
+        torch_zero_tensor = torch.zeros(eqn_c.shape, device=eqn_c.device)
+        E1 = F.mse_loss(eqn_c,torch_zero_tensor)
+        E2 = F.mse_loss(eqn_mx,torch_zero_tensor)
+        E3 = F.mse_loss(eqn_my,torch_zero_tensor)
+
+        loss_bc1 = F.mse_loss(model_output[:,0,:,...], model_val[:,0,:,...])
+        loss_bc2 = F.mse_loss(model_output[:,-1,:,...], model_val[:,-1,:,...])
+        loss_bc3 = F.mse_loss(model_output[:,:,-1,...], model_val[:,:,-1,...])
+        loss_bc4 = F.mse_loss(model_output[:,:,0,...], model_val[:,:,0,...])
+
+        loss_bc = (loss_bc1+loss_bc2+loss_bc3+loss_bc4)/4
+
     elif forcing_type == 'cartesian_periodic_short_hard_loss':
         V_tilde = FDM_NS_cartesian(model_output)
-        loss_bc, loss_w, loss_c, loss_m1, loss_m2 = zero_tensor, zero_tensor, zero_tensor, zero_tensor, zero_tensor
         loss_l2 = lploss(V_tilde, model_val)
 
     else: 

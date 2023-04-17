@@ -22,12 +22,11 @@ class NSLoader(object):
             sub_t:
             t_interval:
         '''
-
         self.S = nx // sub
         self.T = int(nt * t_interval) // sub_t + 1
         self.time_scale = t_interval
         data1 = np.load(datapath)
-        data1 = torch.tensor(data1, dtype=torch.float)[..., ::sub_t, ::sub, ::sub]
+        data1 = torch.tensor(data1, dtype=torch.float)[::, :nt + sub_t:sub_t, :nx:sub, :nx:sub, ...]
         
         # Add channel dimension if it doesnt exist
         if len(data1.shape) == 4:
@@ -50,10 +49,12 @@ class NSLoader(object):
         else:
             a_data = self.data[-n_sample:, :, :, 0, :].reshape(n_sample, self.S, self.S, 1, self.C)
             u_data = self.data[-n_sample:, ...].reshape(n_sample, self.S, self.S, self.T, self.C)
+        
         a_data = a_data.reshape(n_sample, self.S, self.S, 1, self.C).repeat([1, 1, 1, self.T, 1])
         gridx, gridy, gridt = get_grid3d(self.S, self.T, time_scale=self.time_scale)
-        a_data = torch.cat((gridx.repeat([n_sample, 1, 1, 1, self.C]), gridy.repeat([n_sample, 1, 1, 1, self.C]),
-                            gridt.repeat([n_sample, 1, 1, 1, self.C]), a_data), dim=-1)
+        a_data = torch.cat((gridx.repeat([n_sample, 1, 1, 1, 1]), gridy.repeat([n_sample, 1, 1, 1, 1]),
+                            gridt.repeat([n_sample, 1, 1, 1, 1]), a_data), dim=-1)
+        
         dataset = torch.utils.data.TensorDataset(a_data, u_data)
         self.loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=train)
         return self.loader
