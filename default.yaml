@@ -23,7 +23,7 @@ debug:
       sub_t: 1
       shuffle: True
     batchsize: 2
-    ckpt: '/home/cfos3120/checkpoints/Lasso_1_Re500-FDM-cartesian/4C0_v1-cartesian.pt'
+    #ckpt: '/home/cfos3120/checkpoints/Lasso_1_Re500-FDM-cartesian/4C0_v1-cartesian.pt'
     epochs: 2500
     milestones: [1000, 1500, 2000]
     base_lr: 0.0025

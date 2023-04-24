@@ -104,10 +104,12 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     nt = u.size(3)
     device = u.device
 
+    L = 2*np.pi
+
     # Assuming uniform periodic spatial grid NOTE: These need to line up with the grid function made for training.
-    x = torch.arange(0,1.0,1.0/nx, device=device) #<- keep the domain non-dimensional
-    y = torch.arange(0,1.0,1.0/ny, device=device)
-    t = torch.arange(0,t_interval,t_interval/(nt), device=device)
+    x = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)#<- keep the domain non-dimensional
+    y = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)
+    t = torch.tensor(np.linspace(0, t_interval, nt+1)[:-1], dtype=torch.float, device=device)
 
     # each of these (dV_dx etc.) should come with shape (Batch,x,y,t,Velocity direction)
     dV_dx, dV_dy, dV_dt = torch.gradient(u, spacing =tuple([x, y, t]), dim = [1,2,3])
