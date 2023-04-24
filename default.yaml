@@ -13,7 +13,7 @@ debug:
       datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
       problem_type: 'cartesian_periodic_short' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
       Re: 500
-      total_num: 100
+      total_num: 2
       offset: 0
       n_sample: 2
       time_interval: 0.5
@@ -31,7 +31,7 @@ debug:
     ic_loss: 5.0
     f_loss: 1.0
     xy_loss: 0
-    save_dir: 'Lasso_1_Re500-FDM'
+    save_dir: 'Lasso_1_Re500-FDM-cartesian'
     save_name: 'fine_s256_T100-cartesian'
     data_iter: 4
 
@@ -210,7 +210,7 @@ mode_3: # Cartesian Flow
     ic_loss: 1.0
     f_loss: 1.0
     xy_loss: 5.0
-    save_dir: 'Lasso_1_Re500-FDM-cartesian'
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v2'
     save_name: '4C0_v1-cartesian'
     data_iter: 4
 
@@ -233,7 +233,7 @@ mode_3: # Cartesian Flow
     ic_loss: 1.0
     f_loss: 1.0
     xy_loss: 5.0
-    save_dir: 'Lasso_1_Re500-FDM-cartesian'
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v2'
     save_name: 'val_s256_T100-cartesian'
 
   fine:
@@ -259,6 +259,6 @@ mode_3: # Cartesian Flow
     ic_loss: 5.0
     f_loss: 1.0
     xy_loss: 0
-    save_dir: 'Lasso_1_Re500-FDM'
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v2'
     save_name: 'fine_s256_T100-cartesian'
     data_iter: 4
