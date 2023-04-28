@@ -117,8 +117,11 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     dV_dyy = torch.gradient(dV_dy, spacing = tuple([y]), dim = 2)[0]
 
     eqn_c = dV_dx[...,0] + dV_dy[...,1]
-    eqn_mx = nu * (dV_dxx[...,0] + dV_dyy[...,0]) - dV_dt[...,0] - u[...,0]*dV_dx[...,0] - u[...,1]*dV_dy[...,0]
-    eqn_my = nu * (dV_dxx[...,1] + dV_dyy[...,1]) - dV_dt[...,1] - u[...,0]*dV_dx[...,1] - u[...,1]*dV_dy[...,1]
+    #eqn_mx = nu * (dV_dxx[...,0] + dV_dyy[...,0]) - dV_dt[...,0] - u[...,0]*dV_dx[...,0] - u[...,1]*dV_dy[...,0]
+    #eqn_my = nu * (dV_dxx[...,1] + dV_dyy[...,1]) - dV_dt[...,1] - u[...,0]*dV_dx[...,1] - u[...,1]*dV_dy[...,1]
+    
+    eqn_mx = dV_dt[...,0] + u[...,0]*dV_dx[...,0] + u[...,1]*dV_dy[...,0] - nu * (dV_dxx[...,0] + dV_dyy[...,0])
+    eqn_my = dV_dt[...,1] + u[...,0]*dV_dx[...,1] + u[...,1]*dV_dy[...,1] - nu * (dV_dxx[...,1] + dV_dyy[...,1])
 
     return eqn_c, eqn_mx, eqn_my
 
