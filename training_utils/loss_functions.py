@@ -104,7 +104,7 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     nt = u.size(3)
     device = u.device
 
-    L = 2*np.pi
+    L = 1.0 #2*np.pi
 
     # Assuming uniform periodic spatial grid NOTE: These need to line up with the grid function made for training.
     x = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)#<- keep the domain non-dimensional
