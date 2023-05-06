@@ -15,7 +15,7 @@ if __name__ == '__main__':
     if socket.gethostname() == 'DESKTOP-157DQSC':
         path = r'C:\Users\Noahc\Documents\USYD\PHD\8 - Github\PINO datasets'
     else:
-        path = r'Z:\PRJ-MLFluids\datasets'
+        path = r'\project\MLFluids'
 
     file = path + f'/{options.filename}'
     dataset = np.load(file)
