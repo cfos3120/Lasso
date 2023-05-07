@@ -29,6 +29,6 @@ if __name__ == '__main__':
     print('Subsampled to shape {dataset.shape}')
 
     file_name_to_save = 'subsample_' + options.filename
-    np.save(subsample, file_name_to_save)
+    np.save(file_name_to_save, subsample)
     print('Saved Dataset as {file_name_to_save} to working directory')
 
