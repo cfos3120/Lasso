@@ -21,10 +21,15 @@ if __name__ == '__main__':
     dataset = np.load(file)
     print('Loaded in Dataset {options.filename} with shape {dataset.shape}')
 
-    subsample = dataset[:options.batches, 
-                        :options.timesteps,
-                        ::options.space_sub, ::options.space_sub,
-                        ...]
+    if options.filename == 'cavity.npy':
+        subsample = dataset[:options.timesteps,
+                            ::options.space_sub, ::options.space_sub,
+                            ...]
+    else:
+        subsample = dataset[:options.batches, 
+                            :options.timesteps,
+                            ::options.space_sub, ::options.space_sub,
+                            ...]
 
     print('Subsampled to shape {dataset.shape}')
 
