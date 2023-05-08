@@ -22,7 +22,7 @@ if __name__ == '__main__':
     print(f'Loaded in Dataset {options.filename} with shape {dataset.shape}')
 
     if options.filename == 'cavity.npy':
-        subsample = dataset[:options.timesteps,
+        subsample = dataset[0,:options.timesteps,
                             ::options.space_sub, ::options.space_sub,
                             ...]
     else:
