@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     file = path + f'/{options.filename}'
     dataset = np.load(file)
-    print('Loaded in Dataset {options.filename} with shape {dataset.shape}')
+    print(f'Loaded in Dataset {options.filename} with shape {dataset.shape}')
 
     if options.filename == 'cavity.npy':
         subsample = dataset[:options.timesteps,
@@ -35,5 +35,5 @@ if __name__ == '__main__':
 
     file_name_to_save = 'subsample_' + options.filename
     np.save(file_name_to_save, subsample)
-    print('Saved Dataset as {file_name_to_save} to working directory')
+    print(f'Saved Dataset as {file_name_to_save} to working directory')
 
