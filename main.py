@@ -65,7 +65,7 @@ def train_fno(args, model):
 
             x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
             out = model(x_in)
-            out = out[..., :-5]
+            out = out[..., :-5, :]
 
             if ic_weight != 0 or f_weight != 0:
                 loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
@@ -146,7 +146,7 @@ def eval_fno(args, model):
             
             x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
             out = model(x_in)
-            out = out[..., :-5]
+            out = out[..., :-5, :]
             
             loss_l2 = myloss(out, y)
             
