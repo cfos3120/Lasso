@@ -1,6 +1,7 @@
 import yaml
 
 import torch
+import torch.nn.functional as F
 from model.FNO_3D import FNO3d
 from training_utils.optimizers import Adam
 from training_utils.loss_functions import LpLoss, PINO_loss3d_decider
@@ -61,7 +62,10 @@ def train_fno(args, model):
             x, y = next(dataset)
             x, y = x.to(device), y.to(device)
             optimizer.zero_grad()
-            out = model(x)
+
+            x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
+            out = model(x_in)
+            out = out[..., :-5]
 
             if ic_weight != 0 or f_weight != 0:
                 loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = PINO_loss3d_decider(model_input = x, 
@@ -140,7 +144,9 @@ def eval_fno(args, model):
         for x, y in dataset:
             x, y = x.to(device), y.to(device)
             
-            out = model(x)
+            x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
+            out = model(x_in)
+            out = out[..., :-5]
             
             loss_l2 = myloss(out, y)
             
@@ -207,8 +213,8 @@ if __name__ == '__main__':
     
     # 3. Override configuration file if running locally (for debugging purposes)
     if socket.gethostname() == 'DESKTOP-157DQSC':
-        rds_data_path = r'Z:\PRJ-MLFluids\datasets'
-        #rds_data_path = r'C:\Users\Noahc\Documents\USYD\PHD\8 - Github\PINO datasets'
+        #rds_data_path = r'Z:\PRJ-MLFluids\datasets'
+        rds_data_path = r'C:\Users\Noahc\Documents\USYD\PHD\8 - Github\PINO datasets'
         for run_type in ['train','eval','fine']:
             if run_type in run_config:
                 server_datapath = run_config[run_type]['data']['datapath']

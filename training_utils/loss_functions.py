@@ -96,7 +96,7 @@ def FDM_NS_vorticity(w, nu=1/40, t_interval=1.0):
 def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
 
     assert u.shape[-1] == 2
-    assert u.shape[0] > 1 #--> There is a bug with torch.gradient which doesnt handle small batches well
+    assert u.shape[0] > 1 #--> There is a bug with torch.gradient which doesnt handle small batches well on Artemis
 
     batchsize = u.size(0)
     nx = u.size(1)
@@ -104,7 +104,7 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     nt = u.size(3)
     device = u.device
 
-    L = 1.0 #2*np.pi
+    L = 2*np.pi
 
     # Assuming uniform periodic spatial grid NOTE: These need to line up with the grid function made for training.
     x = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)#<- keep the domain non-dimensional
@@ -120,8 +120,14 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     #eqn_mx = nu * (dV_dxx[...,0] + dV_dyy[...,0]) - dV_dt[...,0] - u[...,0]*dV_dx[...,0] - u[...,1]*dV_dy[...,0]
     #eqn_my = nu * (dV_dxx[...,1] + dV_dyy[...,1]) - dV_dt[...,1] - u[...,0]*dV_dx[...,1] - u[...,1]*dV_dy[...,1]
     
-    eqn_mx = dV_dt[...,0] + u[...,0]*dV_dx[...,0] + u[...,1]*dV_dy[...,0] - nu * (dV_dxx[...,0] + dV_dyy[...,0])
-    eqn_my = dV_dt[...,1] + u[...,0]*dV_dx[...,1] + u[...,1]*dV_dy[...,1] - nu * (dV_dxx[...,1] + dV_dyy[...,1])
+    #eqn_mx = dV_dt[...,0] + u[...,0]*dV_dx[...,0] + u[...,1]*dV_dy[...,0] - nu * (dV_dxx[...,0] + dV_dyy[...,0])
+    #eqn_my = dV_dt[...,1] + u[...,0]*dV_dx[...,1] + u[...,1]*dV_dy[...,1] - nu * (dV_dxx[...,1] + dV_dyy[...,1])
+    
+    # correction
+    # Note we do not take the first and last timesteps as the gradient calculated would be less accurate (this is more inline with the voritcity version) 
+    eqn_mx = (dV_dt[..., 0] + u[..., 0]*dV_dx[..., 0] + u[..., 1]*dV_dy[..., 0] - nu*(dV_dxx[..., 0] + dV_dyy[..., 0]))[...,1:-1] #+ outx[..., 2]
+    eqn_my = (dV_dt[..., 1] + u[..., 0]*dV_dx[..., 1] + u[..., 1]*dV_dy[..., 1] - nu*(dV_dxx[..., 1] + dV_dyy[..., 1]))[...,1:-1] #+ outy[..., 2]
+    eqn_c = (dV_dx[..., 0] + dV_dy[..., 1])[...,1:-1]
 
     return eqn_c, eqn_mx, eqn_my
 
@@ -185,12 +191,16 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
         
         # edit this for different problems (curl of sin(4y) is 4cos(4y) -> forcing in other direction is irrelevant for this problem) 
-        forcing_x = (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T).to(device)
+        forcing_x = (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         forcing_y = torch_zero_tensor
 
-        loss_c = lploss.abs(eqn_c, torch_zero_tensor)
-        loss_m1 = lploss.abs(eqn_mx, forcing_x)
-        loss_m2 = lploss.abs(eqn_my, forcing_y)
+        error_normalizer = 2*3
+        #loss_c = lploss.abs(eqn_c, torch_zero_tensor)
+        #loss_m1 = lploss.abs(eqn_mx, forcing_x)
+        #loss_m2 = lploss.abs(eqn_my, forcing_y)
+        loss_c = F.mse_loss(eqn_c, torch_zero_tensor) / error_normalizer
+        loss_m1 = F.mse_loss(eqn_mx, forcing_x) /error_normalizer
+        loss_m2 = F.mse_loss(eqn_my, forcing_y) /error_normalizer 
         loss_l2 = lploss(model_output, model_val)
 
     elif forcing_type == 'cavity':
