@@ -262,3 +262,89 @@ mode_3: # Cartesian Flow
     save_dir: 'Lasso_1_Re500-FDM-cartesian_v5'
     save_name: 'fine_s256_T100-cartesian'
     data_iter: 4
+
+
+mode_4: # Cartesian Flow
+  model:
+    layers: [64, 64, 64, 64, 64]
+    modes1: [8, 8, 8, 8]
+    modes2: [8, 8, 8, 8]
+    modes3: [8, 8, 8, 8]
+    fc_dim: 128
+    in_channels: 2
+    out_channels: 2
+
+  train:
+    data:
+      datapath: '/project/MLFluids/NS_fft_Re500_T4000_cartesian.npy'
+      problem_type: 'cartesian_to_vorticity_trial' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
+      Re: 500
+      total_num: 4000
+      offset: 0
+      n_sample: 400
+      time_interval: 0.5
+      nx: 64
+      nt: 64
+      sub: 1
+      sub_t: 1
+      shuffle: True
+    batchsize: 2
+    epochs: 40000
+    milestones: [10000, 20000, 30000]
+    base_lr: 0.001
+    scheduler_gamma: 0.5
+    ic_loss: 1.0
+    f_loss: 1.0
+    xy_loss: 5.0
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v6'
+    save_name: '4C0_v1-cartesian'
+    data_iter: 4
+
+  eval:
+    data:
+      datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
+      problem_type: 'cartesian_to_vorticity_trial' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
+      Re: 500
+      total_num: 100
+      offset: 0
+      n_sample: 20
+      time_interval: 0.5
+      nx: 256
+      nt: 128
+      sub: 2
+      sub_t: 1
+      shuffle: False
+    batchsize: 2
+    #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
+    ic_loss: 1.0
+    f_loss: 1.0
+    xy_loss: 5.0
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v6'
+    save_name: 'val_s256_T100-cartesian'
+
+  fine: #RuntimeError: CUDA out of memory. Tried to allocate 4.50 GiB (GPU 0; 15.78 GiB total capacity; 7.82 GiB alr$
+    data:
+      datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
+      problem_type: 'cartesian_to_vorticity_trial' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
+      Re: 500
+      total_num: 100
+      offset: 0
+      n_sample: 2
+      time_interval: 0.5
+      nx: 256
+      nt: 128
+      sub: 2
+      sub_t: 1
+      shuffle: True
+    batchsize: 2
+    #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
+    epochs: 2500
+    milestones: [1000, 1500, 2000]
+    base_lr: 0.0025
+    scheduler_gamma: 0.5
+    ic_loss: 5.0
+    f_loss: 1.0
+    xy_loss: 0
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v6'
+    save_name: 'fine_s256_T100-cartesian'
+    data_iter: 4
