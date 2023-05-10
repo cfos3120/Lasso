@@ -210,12 +210,12 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
         forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         
-        y = np.linspace(0, 2*np.pi, S+1)[:-1]
+        y = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1])
         x = y
-        __,dUx_dy = np.gradient(model_output[...,0], x, y, axis=[1,2])
-        dUy_dx,__  = np.gradient(model_output[...,1], x, y, axis=[1,2])
 
-        model_output_curl = dUy_dx - dUx_dy
+        __,dUx_dy = torch.gradient(model_output[...,0], spacing = tuple([x, y]), dim = [1,2])
+        dUy_dx,__ = torch.gradient(model_output[...,1], spacing = tuple([x, y]), dim = [1,2])
+        model_output_curl = (dUy_dx - dUx_dy).unsqueeze(-1)
 
         Dw = FDM_NS_vorticity(model_output_curl, nu=nu, t_interval=t_interval)
         loss_w = lploss(Dw, forcing)
@@ -228,9 +228,9 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         forcing_x = (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         forcing_y = torch_zero_tensor
 
-        loss_c = lploss.abs(eqn_c, torch_zero_tensor)
-        loss_m1 = lploss.abs(eqn_mx, forcing_x)
-        loss_m2 = lploss.abs(eqn_my, forcing_y)
+        loss_c = lploss(eqn_c, torch_zero_tensor)
+        loss_m1 = lploss(eqn_mx, forcing_x)
+        loss_m2 = lploss(eqn_my, forcing_y)
 
         # will still use the cartesian LP loss
         loss_l2 = lploss(model_output, model_val)
