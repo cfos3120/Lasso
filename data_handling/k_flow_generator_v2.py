@@ -227,8 +227,8 @@ if __name__ == '__main__':
         u, v = solver.velocity_field(stream_function_h, real_space=True)
         
         # Store initial conditions
-        sol_cartesian[batch, 0, :, :, 0], sol_cartesian[batch, 0, :, :, 1] = u[::opt.s_sub, ::opt.s_sub] , v[::opt.s_sub, ::opt.s_sub]
-        sol_vorticity[batch, 0, :, :, 0] = w[::opt.s_sub, ::opt.s_sub]
+        sol_cartesian[batch, 0, :, :, 0], sol_cartesian[batch, 0, :, :, 1] = u[...,::opt.s_sub, ::opt.s_sub].squeeze(0) , v[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
+        sol_vorticity[batch, 0, :, :, 0] = w[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
 
         # Solve for each timeslice
         for i in range(opt.t):
@@ -240,8 +240,8 @@ if __name__ == '__main__':
             u, v = solver.velocity_field(stream_function_h, real_space=True)
             
             # Store current timeslice field
-            sol_cartesian[batch, i+1, :, :, 0], sol_cartesian[batch, i+1, :, :, 1] = u[::opt.s_sub, ::opt.s_sub] , v[::opt.s_sub, ::opt.s_sub]
-            sol_vorticity[batch, i+1, :, :, 0] = w[::opt.s_sub, ::opt.s_sub]
+            sol_cartesian[batch, i+1, :, :, 0], sol_cartesian[batch, i+1, :, :, 1] = u[...,::opt.s_sub, ::opt.s_sub].squeeze(0) , v[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
+            sol_vorticity[batch, i+1, :, :, 0] = w[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
 
     np.save(ckpt_dir + '_cartesian', sol_cartesian); print('Saved Cartesian Solution')
     np.save(ckpt_dir + '_vorticity', sol_vorticity); print('Saved Vorticity Solution')
