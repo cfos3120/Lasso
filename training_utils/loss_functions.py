@@ -23,7 +23,7 @@ class LpLoss(object):
         #Assume uniform mesh
         h = 1.0 / (x.size()[1] - 1.0)
 
-        all_norms = (h**(self.d/self.p))*torch.norm(x.view(num_examples,-1) - y.view(num_examples,-1), self.p, 1)
+        all_norms = (h**(self.d/self.p))*torch.norm(x.reshape(num_examples,-1) - y.reshape(num_examples,-1), self.p, 1)
 
         if self.reduction:
             if self.size_average:
@@ -228,9 +228,9 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         forcing_x = (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         forcing_y = torch_zero_tensor
 
-        loss_c = lploss(eqn_c, torch_zero_tensor)
-        loss_m1 = lploss(eqn_mx, forcing_x)
-        loss_m2 = lploss(eqn_my, forcing_y)
+        loss_c = lploss.abs(eqn_c, torch_zero_tensor)
+        loss_m1 = lploss.abs(eqn_mx, forcing_x)
+        loss_m2 = lploss.abs(eqn_my, forcing_y)
 
         # will still use the cartesian LP loss
         loss_l2 = lploss(model_output, model_val)
