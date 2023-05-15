@@ -167,7 +167,7 @@ if __name__ == '__main__':
     parser.add_argument("--s", type=int, default=64)
     parser.add_argument("--t", type=int, default=32)
     parser.add_argument("--s_sub", type=int, default=1)
-    parser.add_argument("--t_slice", type=int, default=1)
+    parser.add_argument("--t_slice", type=float, default=1)
     parser.add_argument("--batches", type=int, default=1)
     parser.add_argument("--dt", type=float, default=1e-3)
     opt = parser.parse_args()
