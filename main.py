@@ -80,8 +80,10 @@ def train_fno(args, model):
                 loss_ic, loss_f, loss_bc = zero_tensor, zero_tensor, zero_tensor
                 loss_w, loss_c, loss_m1, loss_m2  = zero_tensor, zero_tensor, zero_tensor, zero_tensor
 
-            loss_f = loss_w + loss_c + loss_m1 + loss_m2
+            #loss_f = loss_w + loss_c + loss_m1 + loss_m2
+            loss_f = loss_w #<- just for a trial
             total_loss = loss_l2 * xy_weight + loss_f * f_weight + loss_ic * ic_weight + loss_bc
+            
 
             total_loss.backward()
             optimizer.step()

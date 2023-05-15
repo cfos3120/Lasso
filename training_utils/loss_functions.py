@@ -104,7 +104,7 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
     nt = u.size(3)
     device = u.device
 
-    L = 2*np.pi
+    L = 1.0
 
     # Assuming uniform periodic spatial grid NOTE: These need to line up with the grid function made for training.
     x = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)#<- keep the domain non-dimensional
@@ -225,7 +225,7 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         
         torch_zero_tensor = torch.zeros(eqn_c.shape, device=eqn_c.device)
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
-        forcing_x = (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        forcing_x = -1 * (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         forcing_y = torch_zero_tensor
 
         loss_c = lploss.abs(eqn_c, torch_zero_tensor)
