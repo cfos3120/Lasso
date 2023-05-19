@@ -164,12 +164,13 @@ class NavierStokes2d(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--re", type=float, default=500.0)
-    parser.add_argument("--s", type=int, default=64)
-    parser.add_argument("--t", type=int, default=32)
+    parser.add_argument("--s", type=int, default=256)
+    parser.add_argument("--t", type=int, default=1000)
     parser.add_argument("--s_sub", type=int, default=1)
-    parser.add_argument("--t_slice", type=float, default=1)
+    parser.add_argument("--t_slice", type=float, default=0.001)
     parser.add_argument("--batches", type=int, default=1)
     parser.add_argument("--dt", type=float, default=1e-3)
+    parser.add_argument("--t_init", type=float, default=0.0)
     opt = parser.parse_args()
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -194,9 +195,10 @@ if __name__ == '__main__':
         data_path = r'/home/cfos3120/datasets/'
 
     # Base name
-    dataset_name = f'kflow_re{int(opt.re)}_b{opt.batches}_t{opt.t}_s{opt.s}_sub{opt.s_sub}'
+    folder_name = f'kflow_re{int(opt.re)}_b{opt.batches}_t{opt.t}_s{opt.s}'
+    dataset_name = f'dataset_sub{opt.s_sub}_tslice{opt.t_slice:.0E}_init_t{opt.t_init:.0E}'
 
-    ckpt_dir = data_path + '%s/' % dataset_name
+    ckpt_dir = data_path + '%s/' % folder_name
     if not os.path.exists(ckpt_dir):
         os.makedirs(ckpt_dir)
 
@@ -209,10 +211,11 @@ if __name__ == '__main__':
                 'Solver Domain Size' : int(opt.s),
                 'Subsample Divisor' : int(opt.s_sub),
                 'Subsample Output' : int(opt.s/opt.s_sub),
-                'Solver Time-Step': int(opt.dt),
-                'Total Time Between Slices': int(opt.t_slice),
+                'Solver Time-Step': float(opt.dt),
+                'Total Time Between Slices': float(opt.t_slice),
                 'Time Slices per Batch' : int(opt.t),
-                'Number of Batches' : int(opt.batches)
+                'Number of Batches' : int(opt.batches),
+                'Flow Initialisation Time (s)' : float(opt.t_init)
                 }
     
     np.save(ckpt_dir + dataset_name + '_info', sol_info); print('Saved Solver Info')
@@ -223,6 +226,12 @@ if __name__ == '__main__':
 
         # Initialise Fluid Field
         w = GRF.sample(1)
+
+        if opt.t_init > 0:
+            print(f'Initializing Solver with forward march to T = {opt.t_init}s with dt = {opt.dt}')
+            w = solver.advance(w=w, f=torch.tensor(forcing), T=opt.t_init, Re=opt.re, adaptive=False, delta_t=opt.dt)
+            print(f'Initializion Complete, next time-step solved will be {opt.t_init + opt.dt}')
+
         stream_function_h = solver.stream_function(fft.rfft2(w), real_space=False)
         u, v = solver.velocity_field(stream_function_h, real_space=True)
         
@@ -243,8 +252,8 @@ if __name__ == '__main__':
             sol_cartesian[batch, i+1, :, :, 0], sol_cartesian[batch, i+1, :, :, 1] = u[...,::opt.s_sub, ::opt.s_sub].squeeze(0) , v[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
             sol_vorticity[batch, i+1, :, :, 0] = w[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
 
-    np.save(ckpt_dir + '_cartesian', sol_cartesian); print('Saved Cartesian Solution')
-    np.save(ckpt_dir + '_vorticity', sol_vorticity); print('Saved Vorticity Solution')
+    np.save(ckpt_dir + dataset_name + '_cartesian', sol_cartesian); print('Saved Cartesian Solution')
+    np.save(ckpt_dir + dataset_name + '_vorticity', sol_vorticity); print('Saved Vorticity Solution')
     
     
     
