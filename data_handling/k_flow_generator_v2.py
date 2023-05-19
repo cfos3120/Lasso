@@ -252,8 +252,8 @@ if __name__ == '__main__':
             sol_cartesian[batch, i+1, :, :, 0], sol_cartesian[batch, i+1, :, :, 1] = u[...,::opt.s_sub, ::opt.s_sub].squeeze(0) , v[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
             sol_vorticity[batch, i+1, :, :, 0] = w[...,::opt.s_sub, ::opt.s_sub].squeeze(0)
 
-    np.save(ckpt_dir + dataset_name + '_cartesian', sol_cartesian); print('Saved Cartesian Solution')
-    np.save(ckpt_dir + dataset_name + '_vorticity', sol_vorticity); print('Saved Vorticity Solution')
+    np.save(ckpt_dir + dataset_name + '_cartesian', sol_cartesian.numpy()); print('Saved Cartesian Solution')
+    np.save(ckpt_dir + dataset_name + '_vorticity', sol_vorticity.numpy()); print('Saved Vorticity Solution')
     
     
     
