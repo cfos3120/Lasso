@@ -131,6 +131,36 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
 
     return eqn_c, eqn_mx, eqn_my
 
+def FDM_NS_cartesian_v2(u, L = 1.0, nu=1/500, t_interval=1.0):
+
+    assert u.shape[-1] == 2
+    assert u.shape[0] > 1 #--> There is a bug with torch.gradient which doesnt handle small batches well on Artemis
+
+    batchsize = u.size(0)
+    nx = u.size(1)
+    ny = u.size(2)
+    nt = u.size(3)
+    device = u.device
+
+    dt = t_interval / (nt-1)
+
+    y = torch.tensor(np.linspace(0, L, nx+1)[:-1])
+    x = y
+    dUx_dx,dUx_dy   = torch.gradient(u[...,0],  spacing = tuple([x, y]), dim = [1,2])
+    dUy_dx,dUy_dy   = torch.gradient(u[...,1],  spacing = tuple([x, y]), dim = [1,2])
+    dUx_dxx         = torch.gradient(dUx_dx,    spacing = tuple([x]), dim = [1])[0]
+    dUx_dyy         = torch.gradient(dUx_dy,    spacing = tuple([y]), dim = [2])[0]
+    dUy_dxx         = torch.gradient(dUy_dx,    spacing = tuple([x]), dim = [1])[0]
+    dUy_dyy         = torch.gradient(dUy_dy,    spacing = tuple([y]), dim = [2])[0]
+    dUx_dt          = (u[:, :, :, 2:,0] - u[:, :, :, :-2,0]) / (2 * dt)
+    dUy_dt          = (u[:, :, :, 2:,1] - u[:, :, :, :-2,1]) / (2 * dt)
+    
+    eqn_mx = dUx_dt + (u[..., 0]*dUx_dx + u[..., 1]*dUx_dy - 1/500*(dUx_dxx + dUx_dyy))[...,1:-1]
+    eqn_my = dUy_dt + (u[..., 0]*dUy_dx + u[..., 1]*dUy_dy - 1/500*(dUy_dxx + dUy_dyy))[...,1:-1]
+    eqn_c = (dUx_dx + dUy_dy)[...,1:-1]
+
+    return eqn_c, eqn_mx, eqn_my
+
 def FDM_NS_cartesian_hard(A):
     # This is based on the model producing a vector potential A, instead of output velocity V.
     # Thus gradients of A need to be calculated to enforce mass conservation.
@@ -156,6 +186,70 @@ def FDM_NS_cartesian_hard(A):
     return V_tilde
 
 def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, t_interval):
+    B = model_output.shape[0]
+    S = model_output.shape[1]
+    T = model_output.shape[3]
+    C = model_output.shape[4]
+    device = model_output.device
+
+    # Set Loss function
+    torch_zero = torch.zeros(1).to(device)
+
+    # Intialize Losses
+    loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2 = torch_zero, torch_zero, torch_zero, torch_zero, torch_zero, torch_zero, torch_zero
+    
+    # Inital condition is the same across all conditions and test types (3rd index onwards excludes the grid)
+    u0 = model_input[:, :, :, 0, 3:] 
+
+    loss_ic = F.mse_loss(model_output[:, :, :, 0, :], u0)
+
+    if forcing_type == 'cartesian_to_vorticity_trial':
+        
+        # Here we will convert the output to vorticity form and run the backwards pass on that loss.
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.double).reshape(1, S).repeat(S, 1)
+        forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        
+        y = torch.tensor(np.linspace(0, 1.0, S+1)[:-1]).to(device)
+        x = y
+
+        __,dUx_dy = torch.gradient(model_output[...,0], spacing = tuple([x, y]), dim = [1,2])
+        dUy_dx,__ = torch.gradient(model_output[...,1], spacing = tuple([x, y]), dim = [1,2])
+        model_output_curl = (dUy_dx - dUx_dy).unsqueeze(-1)
+
+        Dw = FDM_NS_vorticity(model_output_curl, nu=nu, t_interval=t_interval)
+        loss_w = F.mse_loss(Dw, forcing)
+        
+        # next we will calculate the cartesian losses for logging and further comparison
+        eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian(model_output, nu=nu, t_interval=t_interval)
+        forcing_x = -1 * (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+
+        torch_zero_tensor = torch.zeros(eqn_c.shape, device=eqn_c.device)
+        loss_c  = F.mse_loss(eqn_c, torch_zero_tensor)
+        loss_m1 = F.mse_loss(eqn_mx, forcing_x)
+        loss_m2 = F.mse_loss(eqn_my, torch_zero_tensor)
+
+        # will still use the cartesian LP loss
+        loss_l2 = F.mse_loss(model_output, model_val)
+
+    elif forcing_type == 'cartesian_periodic_short':
+        
+        eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian_v2(model_output, L=1.0, nu=nu, t_interval=t_interval)
+        
+        torch_zero_tensor = torch.zeros(eqn_c.shape, device=eqn_c.device)
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
+        
+        forcing_x = (-1*torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+
+        loss_c = F.mse_loss(eqn_c, torch_zero_tensor)
+        loss_m1 = F.mse_loss(eqn_mx, forcing_x)
+        loss_m2 = F.mse_loss(eqn_my, torch_zero_tensor)
+        loss_l2 = F.mse_loss(model_output, model_val)
+    else:
+        raise Exception('Wrong Use case, need to rewrite code, and use different PINO_loss3d_decider')
+
+    return loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2
+
+def PINO_loss3d_decider_ss(model_input, model_output, model_val, forcing_type, nu, t_interval):
     
     B = model_output.shape[0]
     S = model_output.shape[1]
