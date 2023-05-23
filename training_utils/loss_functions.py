@@ -134,7 +134,7 @@ def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
 def FDM_NS_cartesian_v2(u, L = 1.0, nu=1/500, t_interval=1.0):
 
     assert u.shape[-1] == 2
-    assert u.shape[0] > 1 #--> There is a bug with torch.gradient which doesnt handle small batches well on Artemis
+    #assert u.shape[0] > 1 #--> There is a bug with torch.gradient which doesnt handle small batches well on Artemis
 
     batchsize = u.size(0)
     nx = u.size(1)
@@ -144,7 +144,7 @@ def FDM_NS_cartesian_v2(u, L = 1.0, nu=1/500, t_interval=1.0):
 
     dt = t_interval / (nt-1)
 
-    y = torch.tensor(np.linspace(0, L, nx+1)[:-1])
+    y = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)
     x = y
     dUx_dx,dUx_dy   = torch.gradient(u[...,0],  spacing = tuple([x, y]), dim = [1,2])
     dUy_dx,dUy_dy   = torch.gradient(u[...,1],  spacing = tuple([x, y]), dim = [1,2])
