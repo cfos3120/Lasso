@@ -233,7 +233,7 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
 
     elif forcing_type == 'cartesian_periodic_short':
         
-        eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian_v2(model_output, L=1.0, nu=nu, t_interval=t_interval)
+        eqn_c, eqn_mx, eqn_my = FDM_NS_cartesian_v2(model_output, L=2*np.pi, nu=nu, t_interval=t_interval)
         
         torch_zero_tensor = torch.zeros(eqn_c.shape, device=eqn_c.device)
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
