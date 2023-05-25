@@ -76,7 +76,7 @@ def train_fno(args, model):
                                                                                                   t_interval = t_interval)
             else:
                 zero_tensor = torch.zeros(1).to(device)
-                loss_l2 = F.mse_loss(out,y) #LpLoss.rel(out,y)
+                loss_l2 = LpLoss.rel(out,y)
                 loss_ic, loss_f, loss_bc = zero_tensor, zero_tensor, zero_tensor
                 loss_w, loss_c, loss_m1, loss_m2  = zero_tensor, zero_tensor, zero_tensor, zero_tensor
 

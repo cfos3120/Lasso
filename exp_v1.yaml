@@ -30,7 +30,7 @@ experiment_1.1:
     ic_loss: 1.0
     f_loss: 1.0
     xy_loss: 0.0
-    save_dir: 'Lasso_1_Re500-FDM-cartesian_v8'
+    save_dir: 'Lasso_1_Re500-FDM-cartesian_v9'
     save_name: '4C0_v1-cartesian'
     data_iter: 4
 
@@ -46,10 +46,10 @@ experiment_1.2:
 
   train:
     data:
-      datapath: '/project/MLFluids/NS_fft_Re500_T4000_cartesian.npy'
-      problem_type: 'cartesian_periodic_short' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
+      datapath: '/project/MLFluids/NS_fft_Re500_T4000.npy'
+      problem_type: 'vorticity_periodic_short' # select from (vorticity_periodic_short, cartesian_periodic_short, cavity)
       Re: 500
-      total_num: 4000
+      total_num: 1
       offset: 0
       n_sample: 400
       time_interval: 0.5
@@ -58,7 +58,7 @@ experiment_1.2:
       sub: 1
       sub_t: 1
       shuffle: True
-    batchsize: 2
+    batchsize: 1
     epochs: 40000
     milestones: [10000, 20000, 30000]
     base_lr: 0.001
@@ -66,6 +66,6 @@ experiment_1.2:
     ic_loss: 1.0
     f_loss: 1.0
     xy_loss: 5.0
-    save_dir: 'Lasso_1_Re500-FDM-cartesian_v9'
-    save_name: '4C0_v1-cartesian'
+    save_dir: 'Lasso_1_Re500-FDM_v1_MSEFDM'
+    save_name: '4C0_v1'
     data_iter: 4

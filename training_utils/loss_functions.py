@@ -93,6 +93,60 @@ def FDM_NS_vorticity(w, nu=1/40, t_interval=1.0):
     Du1 = wt + (ux*wx + uy*wy - nu*wlap)[...,1:-1]
     return Du1
 
+def FDM_NS_vorticity_v2(w, L =2*np.pi, nu=1/40, t_interval=1.0):
+    
+    assert w.shape[-1] == 1
+    w = w.squeeze(-1)
+
+    batchsize = w.size(0)
+    nx = w.size(1)
+    ny = w.size(2)
+    nt = w.size(3)
+    device = w.device
+    w = w.reshape(batchsize, nx, ny, nt)
+
+    dt = t_interval / (nt-1)
+
+    w_h = torch.fft.fft2(w, dim=[1, 2])
+    # Wavenumbers in y-direction
+    k_max = nx//2
+    N = nx
+    k_x = torch.cat((torch.arange(start=0, end=k_max, step=1, device=device),
+                     torch.arange(start=-k_max, end=0, step=1, device=device)), 0).reshape(N, 1).repeat(1, N).reshape(1,N,N,1)
+    k_y = torch.cat((torch.arange(start=0, end=k_max, step=1, device=device),
+                     torch.arange(start=-k_max, end=0, step=1, device=device)), 0).reshape(1, N).repeat(N, 1).reshape(1,N,N,1)
+    # Negative Laplacian in Fourier space
+    lap = (k_x ** 2 + k_y ** 2)
+    lap[0, 0, 0, 0] = 1.0
+    f_h = w_h / lap
+
+    # Calculate Velocity
+    ux_h = 1j * k_y * f_h
+    uy_h = -1j * k_x * f_h
+    wx_h = 1j * k_x * w_h
+    wy_h = 1j * k_y * w_h
+    wlap_h = -lap * w_h
+
+    ux = torch.fft.irfft2(ux_h[:, :, :k_max + 1], dim=[1, 2])
+    uy = torch.fft.irfft2(uy_h[:, :, :k_max + 1], dim=[1, 2])
+    wx = torch.fft.irfft2(wx_h[:, :, :k_max+1], dim=[1,2])
+    wy = torch.fft.irfft2(wy_h[:, :, :k_max+1], dim=[1,2])
+    wlap = torch.fft.irfft2(wlap_h[:, :, :k_max+1], dim=[1,2])
+
+    # Calculate Differentials
+    y = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)
+    x = y
+    dw_dx, dw_dy    = torch.gradient(w,  spacing = tuple([x, y]), dim = [1,2])
+    dw_dxx         = torch.gradient(dw_dx,    spacing = tuple([x]), dim = [1])[0]
+    dw_dyy         = torch.gradient(dw_dy,    spacing = tuple([y]), dim = [2])[0]
+    dw_dt          = (w[:, :, :, 2:] - w[:, :, :, :-2]) / (2 * dt)
+
+    Du1 = dw_dt + (ux*dw_dx + uy*dw_dy - nu*(dw_dxx+dw_dyy))[...,1:-1]
+
+    # Store the spectral form so we can calculate loss on it too.
+    Du2 = dw_dt + (ux*wx + uy*wy - nu*wlap)[...,1:-1]
+    return Du1, Du2
+
 def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
 
     assert u.shape[-1] == 2
@@ -243,6 +297,15 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         loss_c = F.mse_loss(eqn_c, torch_zero_tensor)
         loss_m1 = F.mse_loss(eqn_mx, forcing_x)
         loss_m2 = F.mse_loss(eqn_my, torch_zero_tensor)
+        loss_l2 = F.mse_loss(model_output, model_val)
+    elif forcing_type == 'vorticity_periodic_short':
+        print('Performing FDM Vorticity ALl losses MSE')
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
+        forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        Dw1 , Dw2 = FDM_NS_vorticity_v2(model_output, nu=nu, t_interval=t_interval)
+
+        loss_w = F.mse_loss(Dw1, forcing)
+        loss_c = F.mse_loss(Dw2, forcing) # <- Storing in continuity equation, cause why not
         loss_l2 = F.mse_loss(model_output, model_val)
     else:
         raise Exception('Wrong Use case, need to rewrite code, and use different PINO_loss3d_decider')
