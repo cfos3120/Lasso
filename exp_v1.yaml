@@ -58,7 +58,7 @@ experiment_1.2:
       sub: 1
       sub_t: 1
       shuffle: True
-    batchsize: 1
+    batchsize: 2
     epochs: 40000
     milestones: [10000, 20000, 30000]
     base_lr: 0.001
