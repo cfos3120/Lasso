@@ -299,7 +299,7 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         loss_m2 = F.mse_loss(eqn_my, torch_zero_tensor)
         loss_l2 = F.mse_loss(model_output, model_val)
     elif forcing_type == 'vorticity_periodic_short':
-        print('Performing FDM Vorticity ALl losses MSE')
+        #print('Performing FDM Vorticity ALl losses MSE')
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
         forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         Dw1 , Dw2 = FDM_NS_vorticity_v2(model_output, nu=nu, t_interval=t_interval)
