@@ -88,7 +88,7 @@ experiment_1.3:
       Re: 500
       total_num: 100
       offset: 0
-      n_sample: 1
+      n_sample: 2
       time_interval: 0.5
       nx: 128 #256
       nt: 128
