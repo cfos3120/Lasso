@@ -132,7 +132,7 @@ def FDM_NS_vorticity_v2(w, L =2*np.pi, nu=1/40, t_interval=1.0):
     wx = torch.fft.irfft2(wx_h[:, :, :k_max+1], dim=[1,2])
     wy = torch.fft.irfft2(wy_h[:, :, :k_max+1], dim=[1,2])
     wlap = torch.fft.irfft2(wlap_h[:, :, :k_max+1], dim=[1,2])
-
+    print('w', w.shape)
     # Calculate Differentials
     y = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)
     x = y
