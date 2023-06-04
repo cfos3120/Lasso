@@ -93,7 +93,7 @@ def FDM_NS_vorticity(w, nu=1/40, t_interval=1.0):
     Du1 = wt + (ux*wx + uy*wy - nu*wlap)[...,1:-1]
     return Du1
 
-def FDM_NS_vorticity_v2(w, L =2*np.pi, nu=1/40, t_interval=1.0):
+def FDM_NS_vorticity_v2(w, L =1.0, nu=1/40, t_interval=1.0):
     
     assert w.shape[-1] == 1
     w = w.squeeze(-1)
