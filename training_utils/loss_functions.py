@@ -132,20 +132,25 @@ def FDM_NS_vorticity_v2(w, L =1.0, nu=1/40, t_interval=1.0):
     wx = torch.fft.irfft2(wx_h[:, :, :k_max+1], dim=[1,2])
     wy = torch.fft.irfft2(wy_h[:, :, :k_max+1], dim=[1,2])
     wlap = torch.fft.irfft2(wlap_h[:, :, :k_max+1], dim=[1,2])
-    
+    spectral_derivatives = tuple([ux, uy, wx, wy, wlap])
+
     # Calculate Differentials
     y = torch.tensor(np.linspace(0, L, nx+1)[:-1], dtype=torch.float, device=device)
     x = y
-    dw_dx, dw_dy    = torch.gradient(w,  spacing = tuple([x, y]), dim = [1,2])
+    dw_dx, dw_dy    = torch.gradient(w,  spacing = tuple([x, y]), dim = [1,2]) #(batch, X-size, Y-Size, T-size, 1)
     dw_dxx         = torch.gradient(dw_dx,    spacing = tuple([x]), dim = [1])[0]
     dw_dyy         = torch.gradient(dw_dy,    spacing = tuple([y]), dim = [2])[0]
     dw_dt          = (w[:, :, :, 2:] - w[:, :, :, :-2]) / (2 * dt)
+    fdm_derivatives = tuple([dw_dx, dw_dy, dw_dxx, dw_dyy, dw_dt])
 
-    Du1 = dw_dt + (ux*dw_dx + uy*dw_dy - nu*(dw_dxx+dw_dyy))[...,1:-1]
+    # use direct approximation for second order derivative <- HERE
+
+    #Du1 = dw_dt + (ux*dw_dx + uy*dw_dy - nu*(dw_dxx+dw_dyy))[...,1:-1]
+    Du1 = dw_dt + (ux*dw_dx + uy*dw_dy - nu*(wlap))[...,1:-1]
 
     # Store the spectral form so we can calculate loss on it too.
     Du2 = dw_dt + (ux*wx + uy*wy - nu*wlap)[...,1:-1]
-    return Du1, Du2
+    return Du1, Du2, fdm_derivatives, spectral_derivatives
 
 def FDM_NS_cartesian(u, nu=1/500, t_interval=1.0):
 
@@ -302,11 +307,12 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         #print('Performing FDM Vorticity ALl losses MSE')
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
         forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
-        Dw1 , Dw2 = FDM_NS_vorticity_v2(model_output, nu=nu, t_interval=t_interval)
+        Dw1, Dw2, __, __ = FDM_NS_vorticity_v2(model_output, nu=nu, t_interval=t_interval)
 
-        loss_w = F.mse_loss(Dw1, forcing)
-        loss_c = F.mse_loss(Dw2, forcing) # <- Storing in continuity equation, cause why not
-        loss_l2 = F.mse_loss(model_output, model_val)
+        lploss = LpLoss(size_average=True)
+        loss_w = lploss(Dw1, forcing) #F.mse_loss(Dw1, forcing)
+        loss_c = lploss(Dw2, forcing) #F.mse_loss(Dw2, forcing) # <- Storing in continuity equation, cause why not
+        loss_l2 = lploss(Dw2, forcing) #F.mse_loss(model_output, model_val)
     else:
         raise Exception('Wrong Use case, need to rewrite code, and use different PINO_loss3d_decider')
 
