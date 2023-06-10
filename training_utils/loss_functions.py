@@ -310,9 +310,9 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         Dw1, Dw2, __, __ = FDM_NS_vorticity_v2(model_output, nu=nu, t_interval=t_interval)
 
         lploss = LpLoss(size_average=True)
-        loss_w = lploss(Dw1, forcing) #F.mse_loss(Dw1, forcing)
-        loss_c = lploss(Dw2, forcing) #F.mse_loss(Dw2, forcing) # <- Storing in continuity equation, cause why not
-        loss_l2 = lploss(Dw2, forcing) #F.mse_loss(model_output, model_val)
+        loss_w = lploss(Dw1, forcing) #lploss(Dw1, forcing) #F.mse_loss(Dw1, forcing)
+        loss_c = lploss(Dw2, forcing) #lploss(Dw2, forcing) #F.mse_loss(Dw2, forcing) # <- Storing in continuity equation, cause why not
+        loss_l2 = lploss(model_output, model_val) #F.mse_loss(model_output, model_val)
     else:
         raise Exception('Wrong Use case, need to rewrite code, and use different PINO_loss3d_decider')
 
