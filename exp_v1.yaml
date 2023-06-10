@@ -143,5 +143,5 @@ experiment_1.4:
     f_loss: 1.0
     xy_loss: 0
     save_dir: 'Lasso_1_Re500-FDM'
-    save_name: 'fine_T100_R256_exp1_4'
+    save_name: 'fine_T100_R256_exp1_5'
     data_iter: 4
