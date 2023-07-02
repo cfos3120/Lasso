@@ -313,6 +313,14 @@ def PINO_loss3d_decider(model_input, model_output, model_val, forcing_type, nu, 
         loss_w = lploss(Dw1, forcing) #lploss(Dw1, forcing) #F.mse_loss(Dw1, forcing)
         loss_c = lploss(Dw2, forcing) #lploss(Dw2, forcing) #F.mse_loss(Dw2, forcing) # <- Storing in continuity equation, cause why not
         loss_l2 = lploss(model_output, model_val) #F.mse_loss(model_output, model_val)
+    elif forcing_type == 'vorticity_periodic_short_original':
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
+        forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        Dw1 = FDM_NS_vorticity(model_output, nu=nu, t_interval=t_interval)
+
+        lploss = LpLoss(size_average=True)
+        loss_w = lploss(Dw1, forcing) #lploss(Dw1, forcing) #F.mse_loss(Dw1, forcing)
+        loss_l2 = lploss(model_output, model_val) #F.mse_loss(model_output, model_val)
     else:
         raise Exception('Wrong Use case, need to rewrite code, and use different PINO_loss3d_decider')
 
