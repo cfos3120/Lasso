@@ -107,3 +107,17 @@ def load_dataset(args):
     print(f'Data loaded. Resolution : {loader.data.shape}')
     
     return data_loader
+
+class total_loss_list():
+    def __init__(self):
+        super(total_loss_list, self).__init__()
+        self.dictionary = dict()
+        
+    def update(self, loss_list):
+        for key_name in loss_list.keys():
+            if key_name not in self.dictionary.keys():
+                self.dictionary[key_name] = []
+            self.dictionary[key_name].append(loss_list[key_name])
+    
+    def fetch_list(self):
+        return self.dictionary

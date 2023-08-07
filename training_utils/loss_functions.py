@@ -50,7 +50,14 @@ class LpLoss(object):
     def __call__(self, x, y):
         return self.rel(x, y)
 
-def FDM_NS_vorticity(w, nu=1/40, t_interval=1.0):
+def loss_selector(loss_type_name):
+    if loss_type_name == 'LPLoss':
+        return LpLoss()
+    elif loss_type_name == 'MSE':
+        return torch.nn.MSELoss()
+    else: raise(NameError)
+
+def FDM_NS_vorticity(w, loss_function, forcing, nu=1/500, t_interval=1.0):
     
     assert w.shape[-1] == 1
     w = w.squeeze(-1)
@@ -91,7 +98,10 @@ def FDM_NS_vorticity(w, nu=1/40, t_interval=1.0):
     wt = (w[:, :, :, 2:] - w[:, :, :, :-2]) / (2 * dt)
 
     Du1 = wt + (ux*wx + uy*wy - nu*wlap)[...,1:-1]
-    return Du1
+    loss_f = loss_function(Du1, forcing)
+    loss_list = {'Vorticity Loss': loss_f}
+
+    return loss_f, loss_list
 
 def FDM_NS_vorticity_v2(w, L =1.0, nu=1/40, t_interval=1.0):
     
@@ -423,3 +433,24 @@ def PINO_loss3d_decider_ss(model_input, model_output, model_val, forcing_type, n
 
     return loss_l2, loss_ic, loss_bc, loss_w, loss_c, loss_m1, loss_m2
         
+def PINO_loss_calculator(args, model_output, loss_function):
+
+    B = model_output.shape[0]
+    S = model_output.shape[1]
+    T = model_output.shape[3]
+    C = model_output.shape[4]
+    device = model_output.device
+
+    nu = 1/args['data']['Re']
+    t_interval = args['data']['time_interval']
+
+    if args['data']['problem_type'] == 'vorticity_periodic_short_original':
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
+        forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        loss_f, losses_list = FDM_NS_vorticity(model_output, loss_function, forcing, nu=nu, t_interval=t_interval)
+    else: raise(NameError)
+
+    return loss_f, losses_list
+
+
+
