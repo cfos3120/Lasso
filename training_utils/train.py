@@ -103,7 +103,7 @@ def model_routine(args, model):
 
         # 6.5. Save Model Outputs at Each Milestone (NOTE: Only saves Output not model, add model keyword for that)
         if train and epoch+1 in args['milestones']:
-            save_checkpoint(args["save_dir"], args["save_name"], output_sample=out)
+            save_checkpoint(args["save_dir"], args["save_name"], output_sample=out, epoch=epoch+1)
 
     # 7. Save Model Checkpoint and Losses
     if train:
