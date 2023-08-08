@@ -31,7 +31,7 @@ debug:
     f_loss: 1.0
     xy_loss: 5.0
     save_dir: 'rearchitecture_debug'
-    save_name: 'train'
+    save_name: 'train_O4'
     data_iter: 4
     loss_type: 'LPLoss'
     pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
@@ -55,7 +55,7 @@ debug:
     f_loss: 1.0
     xy_loss: 5.0
     save_dir: 'rearchitecture_debug'
-    save_name: 'eval'
+    save_name: 'eval_O4'
     data_iter: 1
     loss_type: 'LPLoss'
     pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
