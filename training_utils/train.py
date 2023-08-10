@@ -70,10 +70,10 @@ def model_routine(args, model):
             out = out[..., :-5, :]
 
             # 6.1. Calculate L2 Loss 
-            loss_l2 = loss_function.rel(x=out,y=y)
+            loss_l2 = loss_function.rel(x=out, y=y)
 
             # 6.2. Calculate Initial Condition Loss 
-            loss_ic = loss_function.rel(x=out,y=y)
+            loss_ic = loss_function.rel(x=out[..., 0, :], y=y[..., 0, :])
 
             # 6.3. Calculate PDE Loss (optional)
             if f_weight != 0:
