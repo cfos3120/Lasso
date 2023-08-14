@@ -72,6 +72,15 @@ def PINO_loss_calculator(args, model_output, loss_function):
         forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         
         loss_f, losses_list = Navier_Stokes_Vorticity_RHS(args, model_output, loss_function, forcing)
+
+    elif args['data']['problem_type'] == 'cartesian_periodic':
+
+        # initialize forcing function to compare to
+        x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
+        x_forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        y_forcing = torch.zeros_like(x_forcing)
+        
+        loss_f, losses_list = Navier_Stokes_Cartesian_RHS(args, model_output, loss_function, x_forcing, y_forcing)
         
     else: raise(NameError)
 
@@ -96,4 +105,26 @@ def Navier_Stokes_Vorticity_RHS(args, model_output, loss_function, forcing):
     loss_f = loss_function(RHS, forcing)
     loss_list = {'Vorticity Loss': loss_f.item()}
 
+    return loss_f, loss_list
+
+def Navier_Stokes_Cartesian_RHS(args, model_output, loss_function, x_forcing, y_forcing):
+
+    nu = 1/args['data']['Re']
+    t_interval = args['data']['time_interval']
+    
+    if args['pino_scheme'] == '2nd Order Periodic':
+        xRHS, yRHS, cRHS,__ = Navier_Stokes_Cartesian_periodic(model_output, nu=nu, t_interval=t_interval, order=2)
+    elif args['pino_scheme'] == '4th Order Periodic':
+        xRHS, yRHS, cRHS,__ = Navier_Stokes_Cartesian_periodic(model_output, nu=nu, t_interval=t_interval, order=4)
+    #elif args['pino_scheme'] == 'Torch.Gradient':
+    #    xRHS, yRHS,__ = Navier_Stokes_Cartesian_torch_gradient(model_output, nu=nu, t_interval=t_interval)
+    else: raise(NameError)
+
+    loss_fx = loss_function(xRHS, x_forcing)
+    loss_fy = loss_function(yRHS, y_forcing)
+    loss_fc = loss_function(cRHS, torch.zeros_like(x_forcing))
+    loss_list = {'X Momentum Loss': loss_fx.item(), 'Y Momentum Loss': loss_fy.item(), 'Continuity Loss': loss_fc.item()}
+
+    loss_f = loss_fx # For now just backwards pass X momentum.
+     
     return loss_f, loss_list
