@@ -244,31 +244,31 @@ debug_cart: # Cartesian Flow
     loss_type: 'LPLoss'
     pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
 
-  eval:
-    data:
-      datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
-      problem_type: 'cartesian_periodic'
-      Re: 500
-      total_num: 100
-      offset: 0
-      n_sample: 20
-      time_interval: 0.5
-      nx: 256
-      nt: 128
-      sub: 2
-      sub_t: 1
-      shuffle: False
-    batchsize: 2
-    #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
-    ic_loss: 1.0
-    f_loss: 1.0
-    xy_loss: 5.0
-    save_dir: 'rearchitecture_debug'
-    save_name: 'cart_eval_O4'
-    loss_type: 'LPLoss'
-    pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
+  # eval:
+  #   data:
+  #     datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
+  #     problem_type: 'cartesian_periodic'
+  #     Re: 500
+  #     total_num: 100
+  #     offset: 0
+  #     n_sample: 20
+  #     time_interval: 0.5
+  #     nx: 256
+  #     nt: 128
+  #     sub: 2
+  #     sub_t: 1
+  #     shuffle: False
+  #   batchsize: 2
+  #   #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
+  #   ic_loss: 1.0
+  #   f_loss: 1.0
+  #   xy_loss: 5.0
+  #   save_dir: 'rearchitecture_debug'
+  #   save_name: 'cart_eval_O4'
+  #   loss_type: 'LPLoss'
+  #   pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
 
-  fine: #RuntimeError: CUDA out of memory. Tried to allocate 4.50 GiB (GPU 0; 15.78 GiB total capacity; 7.82 GiB alr$
+  eval: 
     data:
       datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
       problem_type: 'cartesian_periodic'
@@ -281,7 +281,32 @@ debug_cart: # Cartesian Flow
       nt: 128
       sub: 2
       sub_t: 1
-      shuffle: True
+      shuffle: False
+    batchsize: 2
+    #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
+    ic_loss: 5.0
+    f_loss: 1.0
+    xy_loss: 0.0
+    save_dir: 'rearchitecture_debug'
+    save_name: 'cart_eval_O4'
+    data_iter: 4
+    loss_type: 'LPLoss'
+    pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
+
+  fine:
+    data:
+      datapath: '/project/MLFluids/NS_Re500_s256_T100_test_cartesian.npy'
+      problem_type: 'cartesian_periodic'
+      Re: 500
+      total_num: 100
+      offset: 0
+      n_sample: 2
+      time_interval: 0.5
+      nx: 256
+      nt: 128
+      sub: 2
+      sub_t: 1
+      shuffle: False
     batchsize: 2
     #ckpt: '/home/cfos3120/checkpoints/Re500-FDM/4C0_v1.pt'
     epochs: 2500
