@@ -48,7 +48,7 @@ class LpLoss(object):
         return diff_norms/y_norms
 
     def __call__(self, x, y):
-        return self.rel(x, y)
+        return self.abs(x, y)
 
 def loss_selector(loss_type_name):
     if loss_type_name == 'LPLoss':
@@ -77,7 +77,7 @@ def PINO_loss_calculator(args, model_output, loss_function):
 
         # initialize forcing function to compare to
         x2 = torch.tensor(np.linspace(0, 2*np.pi, S+1)[:-1], dtype=torch.float).reshape(1, S).repeat(S, 1)
-        x_forcing = -4 * (torch.cos(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
+        x_forcing = -1 * (torch.sin(4*(x2))).reshape(1,S,S,1).repeat(B, 1, 1, T-2).to(device)
         y_forcing = torch.zeros_like(x_forcing)
         
         loss_f, losses_list = Navier_Stokes_Cartesian_RHS(args, model_output, loss_function, x_forcing, y_forcing)
