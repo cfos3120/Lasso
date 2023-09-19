@@ -236,7 +236,7 @@ debug_cart: # Cartesian Flow
     base_lr: 0.001
     scheduler_gamma: 0.5
     ic_loss: 1.0
-    f_loss: 1.0
+    f_loss: 0.0
     xy_loss: 5.0
     save_dir: 'rearchitecture_debug'
     save_name: 'cart_train_O4'

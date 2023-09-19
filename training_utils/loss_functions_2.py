@@ -125,6 +125,6 @@ def Navier_Stokes_Cartesian_RHS(args, model_output, loss_function, x_forcing, y_
     loss_fc = loss_function(cRHS, torch.zeros_like(x_forcing))
     loss_list = {'X Momentum Loss': loss_fx.item(), 'Y Momentum Loss': loss_fy.item(), 'Continuity Loss': loss_fc.item()}
 
-    loss_f = loss_fx # For now just backwards pass X momentum.
+    loss_f = loss_fx + loss_fy + loss_fc # For now just backwards pass X momentum.
      
     return loss_f, loss_list
