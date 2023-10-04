@@ -85,6 +85,56 @@ class NSLoader(object):
                     new_data[i * 4 + j, interval: T + 1] = data[i + 1, 0:interval + 1]
         return new_data
     
+class CavityLoader(object):
+    def __init__(self, datapath, nx, sub=1):
+        '''
+        Load data from npy and reshape to (N, X, Y, C)
+        Args:
+            datapath1: path to data
+            nx:
+            sub:
+        '''
+        self.S = nx // sub
+        data1 = np.load(datapath)
+        data1 = torch.tensor(data1, dtype=torch.float)[::, :nx:sub, :nx:sub, ...]
+        
+        # Add channel dimension if it doesnt exist
+        if len(data1.shape) == 4:
+            data1 = data1.reshape(data1.shape[0],
+                                  data1.shape[1],
+                                  data1.shape[2],
+                                  data1.shape[3],
+                                  1)
+        self.C = data1.shape[-1]
+        self.data = data1
+
+    def make_loader(self, n_sample, batch_size, start=0, train=True):
+        
+        train_size = int(0.9 * self.data.shape[0])
+        test_size = self.data.shape[0] - train_size
+        train_dataset, test_dataset = torch.split(self.data, [train_size, test_size])
+        #torch.utils.data.random_split(self.data, [train_size, test_size])
+        
+        print('Cavity Training Set Size: ', train_size, 'Testing Set Size: ', test_size)
+        a_data_train = train_dataset[... , [0], :]
+        u_data_train = train_dataset[... , [1], :]
+
+        a_data_test = test_dataset[... , [0], :]
+        u_data_test = test_dataset[... , [1], :]
+
+        #a_data = a_data.reshape(n_sample, self.S, self.S, 1, self.C).repeat([1, 1, 1, self.T, 1])
+        gridx, gridy,__ = get_grid3d(self.S, 1, time_scale=1)
+        a_data_train = torch.cat((gridx.repeat([train_size, 1, 1, 1, 1]), gridy.repeat([train_size, 1, 1, 1, 1]), a_data_train), dim=-1)
+        a_data_test = torch.cat((gridx.repeat([test_size, 1, 1, 1, 1]), gridy.repeat([test_size, 1, 1, 1, 1]), a_data_test), dim=-1)
+        
+        dataset_train = torch.utils.data.TensorDataset(a_data_train, u_data_train)
+        self.loader_train = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
+        
+        dataset_test = torch.utils.data.TensorDataset(a_data_test, u_data_test)
+        self.loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False)
+        
+        return self.loader_train, self.loader_test
+
 def sample_data(loader):
     while True:
         for batch in loader:
@@ -94,19 +144,24 @@ def load_dataset(args):
     
     #Load in Dataset and create `Loader`
     data_config = args['data']
-    loader = NSLoader(datapath=data_config['datapath'],
-                        nx=data_config['nx'], nt=data_config['nt'],
-                        sub=data_config['sub'], sub_t=data_config['sub_t'],
-                        t_interval=data_config['time_interval'])
+
+    if data_config['problem_type'] == 'cartesian_periodic' or data_config['problem_type'] == 'vorticity_periodic':
+        loader = NSLoader(datapath=data_config['datapath'],
+                            nx=data_config['nx'], nt=data_config['nt'],
+                            sub=data_config['sub'], sub_t=data_config['sub_t'],
+                            t_interval=data_config['time_interval'])
+          
+    elif data_config['problem_type'] == 'cavity':
+        loader = CavityLoader(datapath=data_config['datapath'], 
+                            nx=data_config['nx'], sub=data_config['sub'])
 
     data_loader = loader.make_loader(data_config['n_sample'],
-                                      batch_size=args['batchsize'],
-                                      start=data_config['offset'],
-                                      train=data_config['shuffle'])
+                                    batch_size=args['batchsize'],
+                                    start=data_config['offset'],
+                                    train=data_config['shuffle'])            
 
     print(f'Data loaded. Resolution : {loader.data.shape}')
-    
-    return data_loader
+    return data_loader #if cavity this will be a tuple
 
 class total_loss_list():
     def __init__(self):

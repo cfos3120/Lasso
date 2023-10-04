@@ -2,11 +2,12 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from .fdm_stencils import *
+
 class LpLoss(object):
     '''
     loss function with rel/abs Lp loss
     '''
-    def __init__(self, d=2, p=2, size_average=True, reduction=True):
+    def __init__(self, d=2, p=2, size_average=True, reduction=True, rel_or_abs = 'rel'):
         super(LpLoss, self).__init__()
 
         #Dimension and Lp-norm type are postive
@@ -16,6 +17,7 @@ class LpLoss(object):
         self.p = p
         self.reduction = reduction
         self.size_average = size_average
+        self.rel_or_abs = rel_or_abs
 
     def abs(self, x, y):
         num_examples = x.size()[0]
@@ -48,11 +50,19 @@ class LpLoss(object):
         return diff_norms/y_norms
 
     def __call__(self, x, y):
-        return self.abs(x, y)
+        if self.rel_or_abs == 'abs':
+            return self.abs(x, y)
+        elif self.rel_or_abs == 'rel':
+            return self.rel(x, y)
+        else:
+            raise(ValueError)
+
 
 def loss_selector(loss_type_name):
     if loss_type_name == 'LPLoss':
-        return LpLoss()
+        return LpLoss(rel_or_abs = 'abs')
+    elif loss_type_name == 'LPLoss Relative':
+        return LpLoss(rel_or_abs = 'rel')
     elif loss_type_name == 'MSE':
         return torch.nn.MSELoss()
     else: raise(NameError)

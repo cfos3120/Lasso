@@ -1,0 +1,53 @@
+debug:
+  model:
+    layers: [64, 64, 64, 64, 64]
+    modes1: [8, 8, 8, 8]
+    modes2: [8, 8, 8, 8]
+    modes3: [8, 8, 8, 8]
+    fc_dim: 128
+    in_channels: 3
+    out_channels: 3
+
+  train:
+    data:
+      datapath: '/project/MLFluids/steady_cavity_case_b200_maxU100ms.npy'
+      problem_type: 'cavity'
+      total_num: 198
+      offset: 0
+      n_sample: 188
+      nx: 130
+      sub: 2
+      shuffle: True
+    batchsize: 1
+    epochs: 40000
+    milestones: [10000, 20000, 30000]
+    base_lr: 0.001
+    scheduler_gamma: 0.5
+    ic_loss: 0.0
+    f_loss: 0.0
+    xy_loss: 5.0
+    save_dir: 'cavity_debug'
+    save_name: 'cavity_train'
+    data_iter: 4
+    loss_type: 'LPLoss Relative'
+    #pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
+
+  eval_blocked_out:
+    data:
+      datapath: '/project/MLFluids/steady_cavity_case_b200_maxU100ms.npy'
+      problem_type: 'cavity'
+      total_num: 198
+      offset: 0
+      n_sample: 188
+      nx: 130
+      sub: 1
+      shuffle: False
+    batchsize: 2
+    ic_loss: 0.0
+    f_loss: 0.0
+    xy_loss: 5.0
+    save_dir: 'rearchitecture_debug'
+    save_name: 'eval_O4'
+    data_iter: 1
+    loss_type: 'LPLoss Relative'
+    #pino_scheme: '4th Order Periodic' # select from ('2nd Order Periodic', '4th Order Periodic', 'Torch.Gradient', 'Spectral')
