@@ -44,13 +44,14 @@ def model_routine_cavity(args, model):
     total_loss_dictionary = total_loss_list()
 
     # 6. Run Model Routine (Training)  
+    model.train()
 
     for epoch in range(epochs): 
         print(epoch)
         epoch_start_time = default_timer()
 
         # Set Model to Train
-        model.train()
+        #model.train()
 
         for _ in range(num_data_iter):
             x, y = next(dataset_train)
@@ -83,24 +84,24 @@ def model_routine_cavity(args, model):
             save_checkpoint(args["save_dir"], args["save_name"], output_sample=out, epoch=epoch+1)
 
         # 6.6 Evaluate the model
-        model.eval()
-        loss_l2 = 0
-        count = 0
+        # model.eval()
+        # loss_l2 = 0
+        # count = 0
 
-        for x, y_eval in dataset_test:
-            x, y_eval = x.to(device), y_eval.to(device)
+        # for x, y_eval in dataset_test:
+        #     x, y_eval = x.to(device), y_eval.to(device)
 
-            x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
-            out_eval = model(x_in)
-            out_eval = out_eval[..., :-5, :]
+        #     x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
+        #     out_eval = model(x_in)
+        #     out_eval = out_eval[..., :-5, :]
 
-            # 6.7. Calculate L2 Loss 
-            loss_l2 += loss_function(out_eval, y_eval)
-            count += 1
+        #     # 6.7. Calculate L2 Loss 
+        #     loss_l2 += loss_function(out_eval, y_eval)
+        #     count += 1
         
-        # 6.8 Calculate the Average Loss and Store to Dictionary
-        loss_l2 = loss_l2/count
-        total_loss_dictionary.update({'Average Validation Loss': loss_l2.item()})
+        # # 6.8 Calculate the Average Loss and Store to Dictionary
+        # loss_l2 = loss_l2/count
+        # total_loss_dictionary.update({'Average Validation Loss': loss_l2.item()})
 
     # 7. Save Model Checkpoint and Losses
     save_checkpoint(args["save_dir"], args["save_name"], model, 
