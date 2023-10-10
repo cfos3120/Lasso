@@ -110,7 +110,7 @@ class CavityLoader(object):
 
     def make_loader(self, n_sample, batch_size, start=0, train=True):
         
-        train_size = int(0.9 * self.data.shape[0])
+        train_size = int(0.7 * self.data.shape[0])
         test_size = self.data.shape[0] - train_size
         train_dataset, test_dataset = torch.split(self.data, [train_size, test_size])
         #torch.utils.data.random_split(self.data, [train_size, test_size])

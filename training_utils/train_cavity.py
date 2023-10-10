@@ -53,23 +53,23 @@ def model_routine_cavity(args, model):
         # Set Model to Train
         #model.train()
 
-        for _ in range(num_data_iter):
-            x, y = next(dataset_train)
-            x, y = x.to(device), y.to(device)
+        #for _ in range(num_data_iter):
+        x, y = next(dataset_train)
+        x, y = x.to(device), y.to(device)
 
-            optimizer.zero_grad()
+        optimizer.zero_grad()
 
-            x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
-            out = model(x_in)
-            out = out[..., :-5, :]
+        x_in = F.pad(x, (0, 0, 0, 5), "constant", 0)
+        out = model(x_in)
+        out = out[..., :-5, :]
 
-            # 6.1. Calculate L2 Loss 
-            loss_l2 = loss_function(out, y)
+        # 6.1. Calculate L2 Loss 
+        loss_l2 = loss_function(out, y)
 
-            total_loss = (loss_l2 * xy_weight)
+        total_loss = (loss_l2 * xy_weight)
 
-            total_loss.backward()
-            optimizer.step()
+        total_loss.backward()
+        optimizer.step()
 
         scheduler.step()
         epoch_end_time = default_timer()
